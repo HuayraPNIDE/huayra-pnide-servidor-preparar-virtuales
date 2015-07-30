@@ -4,6 +4,7 @@ TMP_DIR=/tmp/hps-ldap-confs
 LDAP_PASSWORD=123456
 
 echo "[HUAYRA PNIDE SERVIDOR] - Configurando slapd"
+
 echo "slapd slapd/domain string primariadigital.local" | debconf-set-selections
 echo "slapd slapd/organization string primariadigital.local" | debconf-set-selections
 echo "slapd slapd/password1 password $LDAP_PASSWORD" | debconf-set-selections
@@ -11,9 +12,13 @@ echo "slapd slapd/password2 password $LDAP_PASSWORD" | debconf-set-selections
 echo "slapd slapd/internal/generated_adminpw password $LDAP_PASSWORD" | debconf-set-selections
 echo "slapd slapd/internal/adminpw password $LDAP_PASSWORD" | debconf-set-selections
 echo "slapd shared/organization	string primariadigital.local" | debconf-set-selections
+echo "slapd slapd/move_old_database boolean true" | debconf-set-selections
+echo "slapd slapd/dump_database_destdir string /var/backups/" | debconf-set-selections
 echo "slapd slapd/allow_ldap_v2 boolean false" | debconf-set-selections
 echo "slapd slapd/backend string HDB" | debconf-set-selections 
+rm -rf /var/backups/*
 dpkg-reconfigure -f noninteractive slapd
+
 
 ldapadd -c -Y EXTERNAL -H ldapi:/// -f /etc/ldap/schema/core.ldif
 ldapadd -c -Y EXTERNAL -H ldapi:/// -f /etc/ldap/schema/cosine.ldif
@@ -56,6 +61,4 @@ echo "BASE  dc=primariadigital, dc=local" > /etc/ldap/ldap.conf
 echo "URI ldap://10.8.0.195/" >> /etc/ldap/ldap.conf
 echo "TLS_CACERT	/etc/ssl/certs/ca-certificates.crt" >> /etc/ldap/ldap.conf
 
-
-
-
+/etc/init.d/slapd restart
