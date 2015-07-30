@@ -1,14 +1,15 @@
 #!/bin/bash
 
 TMP_DIR=/tmp/hps-ldap-confs
+LDAP_PASSWORD=123456
 
 echo "[HUAYRA PNIDE SERVIDOR] - Configurando slapd"
 echo "slapd slapd/domain string primariadigital.local" | debconf-set-selections
 echo "slapd slapd/organization string primariadigital.local" | debconf-set-selections
-echo "slapd slapd/password1 password primariadigital123456" | debconf-set-selections
-echo "slapd slapd/password2 password primariadigital123456" | debconf-set-selections
-echo "slapd slapd/internal/generated_adminpw password primariadigital123456" | debconf-set-selections
-echo "slapd slapd/internal/adminpw password primariadigital123456" | debconf-set-selections
+echo "slapd slapd/password1 password $LDAP_PASSWORD" | debconf-set-selections
+echo "slapd slapd/password2 password $LDAP_PASSWORD" | debconf-set-selections
+echo "slapd slapd/internal/generated_adminpw password $LDAP_PASSWORD" | debconf-set-selections
+echo "slapd slapd/internal/adminpw password $LDAP_PASSWORD" | debconf-set-selections
 echo "slapd shared/organization	string primariadigital.local" | debconf-set-selections
 echo "slapd slapd/allow_ldap_v2 boolean false" | debconf-set-selections
 echo "slapd slapd/backend string HDB" | debconf-set-selections 
@@ -41,29 +42,20 @@ ldapmodify -Y EXTERNAL -H ldapi:/// -f $TMP_DIR/loglevel.ldif
 ldapmodify -Y EXTERNAL -H ldapi:/// -f $TMP_DIR/uid_eq.ldif
 ldapmodify -Y EXTERNAL -H ldapi:/// -f $TMP_DIR/access.ldif
 
+echo "dn: ou=People,dc=primariadigital,dc=local
+ou: People
+objectClass: organizationalUnit
+
+dn: ou=Group,dc=primariadigital,dc=local
+ou: Group
+objectClass: organizationalUnit" > $TMP_DIR/ou.ldif
+
+ldapadd -c -x -D cn=admin,dc=primariadigital,dc=local -W -f $TMP_DIR/ou.ldif
+
 echo "BASE  dc=primariadigital, dc=local" > /etc/ldap/ldap.conf
 echo "URI ldap://10.8.0.195/" >> /etc/ldap/ldap.conf
 echo "TLS_CACERT	/etc/ssl/certs/ca-certificates.crt" >> /etc/ldap/ldap.conf
 
 
 
-
-
-#* slapd/password2: (password omitted)
-#* slapd/password1: (password omitted)
-#* slapd/internal/generated_adminpw: (password omitted)
-#* slapd/internal/adminpw: (password omitted)
-#  slapd/password_mismatch:
-#  slapd/unsafe_selfwrite_acl:
-#* slapd/purge_database: true
-#* slapd/dump_database_destdir: /var/backups/slapd-VERSION
-#* slapd/allow_ldap_v2: false
-#* slapd/dump_database: when needed
-#  slapd/upgrade_slapcat_failure:
-#* slapd/move_old_database: true
-#* slapd/no_configuration: false
-#* slapd/domain:
-#* shared/organization:
-#* slapd/backend: DRB
-#  slapd/invalid_config: true
 
