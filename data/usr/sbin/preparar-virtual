@@ -1,0 +1,5 @@
+#!/bin/bash
+
+PARTS_PATH="../share/huayra-pnide-servidor-preparar-virtuales.d/"
+
+run-parts --report --exit-on-error $PARTS_PATH
