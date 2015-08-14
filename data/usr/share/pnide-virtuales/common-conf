@@ -1,0 +1,31 @@
+####################################################
+#
+# Para incluir este archivo de configuracion:
+#
+# common=$(dirname $(readlink -f $0))
+# source ./common-conf
+#
+####################################################
+
+SERVER=10.9.0.47
+USER=partimagic
+#CONTRASENIA=
+UTILS=(scp wget xz virt-install sha1sum) # ssh-askpass bzip2
+
+function check_util {
+  for i in ${UTILS[@]}; do
+    command -v ${i} > /dev/null || { log_error "## por favor instalar " ${i}; exit 1; }
+  done
+}
+
+function log_error() {
+  echo -e " \e[1;31m[ERROR] ${1}\e[0m"
+}
+
+function log_warn() {
+  echo -e " \e[49;93m[WARN] ${1}\e[0m"
+}
+
+function log_info() {
+  echo -e " \e[1;34m[INFO] \e[0m${1}"
+}

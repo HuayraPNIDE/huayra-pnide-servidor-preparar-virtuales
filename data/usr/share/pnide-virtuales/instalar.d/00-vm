@@ -1,0 +1,131 @@
+#!/usr/bin/env bash
+
+#set -e
+
+########
+# INIT #
+########
+SCRIPT_DIR=$(dirname $(readlink -f $0))
+source ${SCRIPT_DIR}/../common-conf
+
+#######
+# VAR #
+#######
+CMD_ROOT=""
+DIR_HOST=vms
+URI=${SERVER}/${DIR_HOST}/
+VMS=(gestion escuela)
+VMS_EXT=".qcow2"
+DIR_VM=/opt/pnide/vm
+DIR_TMP=$(mktemp -d -q) > /dev/null
+VIRT_INSTALL=virt-install
+VIRT_INSTALL_OPTION=' --connect qemu:///system --memory=2048 --arch=x86_64 --vcpus=1 --os-variant=debianwheezy --graphics spice,listen=0.0.0.0 --hvm --virt-type kvm --cdrom /dev/cdrom --network=type=bridge,source=br0'
+VIRSH=virsh
+HASH=sha1sum
+HASH_EXT='.sha1'
+DELAY=2
+
+
+########
+# FUNC #
+########
+function check_root() {
+  if [ $EUID -ne 0 ]; then
+     log_error "Este script necesita ejecutarse como root" 1>&2
+     CMD_ROOT=$(command -v sudo)
+     if [ ! -x ${CMD_ROOT} ]; then
+       log_error "Este script necesita ejecutarse como root"
+       exit 1;
+     fi
+   else
+     return 0
+   fi
+}
+
+function download_vm() {
+  log_info "Descargando máquinas virtuales."
+  cd ${DIR_TMP}
+  for i in ${VMS[@]}; do
+    log_info "Descargando:  ${i}${VMS_EXT}"
+    wget -cv ${URI}${i}${HASH_EXT}
+    if [ -d ${DIR_VM} ] && [ -f ${DIR_VM}/${i}${HASH_EXT} ] && [ -f ${DIR_VM}/${i}${VMS_EXT} ]; then
+      log_info "Verificando si hay actualizaciones."
+      diff ${DIR_VM}/${i}${HASH_EXT} ${DIR_TMP}/${i}${HASH_EXT} > /dev/null
+      if [ $? == 0 ]; then
+        vm ${i}
+        continue;
+      fi
+    fi
+    wget -cv ${URI}${i}${VMS_EXT}
+  #    wget -cv ${URI}${i}.sha256
+    hash_vm ${i}
+  done;
+}
+
+function hash_vm() {
+  log_info "Checkeando integridad máquinas virtuales."
+  cd ${DIR_TMP}
+  if [ -f ${1}${HASH_EXT} ]; then
+    ${HASH} -c --status ${1}${HASH_EXT} > /dev/null 2>&1
+    if [ $? != 0 ]; then
+      log_error "La máquina virtual ${DIR_TMP}/${1}${HASH_EXT} NO es correcta."
+    else
+      log_info "La máquina virtual ${DIR_TMP}/${1}${HASH_EXT} es correcta."
+      vm ${1}
+    fi
+  else
+    log_error "El archivo ${DIR_TMP}/${1}${HASH_EXT} NO existe."
+  fi
+}
+
+function vm() {
+  if [ ! -d ${DIR_VM} ]; then
+    log_info "Creando directorio ${DIR_VM}"
+    mkdir -p ${DIR_VM} > /dev/null 2>&1
+    if [ $? != 0 ]; then
+      $(${CMD_ROOT} mkdir -p ${DIR_VM})
+    fi
+  fi
+
+  log_info "Cambiando al directorio  ${DIR_VM}"
+  cd ${DIR_VM}
+  log_info "Creando máquinas virtuales."
+  mv -v ${DIR_TMP}/${1}* ${DIR_VM}/ > /dev/null 2>&1
+  if [ $? != 0 ]; then
+    echo "Presione ENTER"
+    ${CMD_ROOT} mv -v ${DIR_TMP}/${1}* ${DIR_VM}/
+  fi
+  chown -R administrador.administrador ${DIR_VM} > /dev/null 2>&1
+  if [ $? != 0 ]; then
+    ${CMD_ROOT} chown -R administrador.administrador ${DIR_VM} > /dev/null 2>&1
+  fi
+  VIRT_INSTALL_OPTION_FULL="${VIRT_INSTALL_OPTION} --noautoconsole --disk path=${DIR_VM}/${1}${VMS_EXT} --name ${1}"
+  if [ ${1} != "gestion" ]; then
+    log_info "Creando: " ${VIRT_INSTALL_OPTION_FULL}
+    ${VIRT_INSTALL} ${VIRT_INSTALL_OPTION_FULL} 2> /dev/null
+    sleep ${DELAY}
+    ${VIRSH} shutdown ${1}
+  else
+    log_info "Creando: ${VIRT_INSTALL_OPTION_FULL}"
+    ${VIRT_INSTALL} ${VIRT_INSTALL_OPTION_FULL} 2> /dev/null
+    sleep ${DELAY}
+    ${VIRSH} autostart ${1}
+  fi
+}
+
+log_info "Chequeando herramientas necesarias..."
+check_util
+
+log_info "Chequeando permisos de ususario."
+check_root
+
+download_vm
+hash_vm
+
+log_info "Chequeando instalación."
+if [ $? != 0 ]; then
+  log_warn "Hubo un fallo en la instalación..."
+else
+  $(rm -rf ${DIR_TMP})
+  log_info "Borrando archivos temporales..."
+fi
