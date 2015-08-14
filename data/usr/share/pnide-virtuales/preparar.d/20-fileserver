@@ -2,4 +2,10 @@
 
 echo "[HUAYRA PNIDE SERVIDOR] - Creando fileserver"
 
-mkdir -p /opt/pnide/fs 
+FILESERVER_PATH=/opt/pnide/fs 
+FILESERVER_OPTS=rw,sync,no_root_squash,no_subtree_check
+
+mkdir -p $FILESERVER_PATH
+echo "$FILESERVER_PATH	*($FILESERVER_OPTS)" > /etc/exports
+exportfs -a
+/etc/init.d/nfs-kernel-server restart

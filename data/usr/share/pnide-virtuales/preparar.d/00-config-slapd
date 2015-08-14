@@ -56,7 +56,28 @@ dn: ou=Group,dc=primariadigital,dc=local
 ou: Group
 objectClass: organizationalUnit" > $TMP_DIR/ou.ldif
 
-ldapadd -c -x -D cn=admin,dc=primariadigital,dc=local -W -f $TMP_DIR/ou.ldif
+echo "dn: cn=alumnos,ou=Group,dc=primariadigital,dc=local
+cn: alumnos
+gidnumber: 500
+objectclass: posixGroup
+objectclass: top" > $TMP_DIR/group_alumnos.ldif
+
+echo "dn: cn=Sebastian Alvarez,ou=People,dc=primariadigital,dc=local
+cn: Sebastian Alvarez
+gidnumber: 500
+givenname: Sebastian
+homedirectory: /fs/salvarez
+objectclass: inetOrgPerson
+objectclass: posixAccount
+objectclass: top
+sn: Alvarez
+uid: salvarez
+uidnumber: 1001
+userpassword: {MD5}ICy5YqxZB1uWSwcVLSNLcA==" > $TMP_DIR/user_prueba.ldif
+
+ldapadd -c -x -w $LDAP_PASSWORD -D cn=admin,dc=primariadigital,dc=local -f $TMP_DIR/ou.ldif
+ldapadd -c -x -w $LDAP_PASSWORD -D cn=admin,dc=primariadigital,dc=local -f $TMP_DIR/group_alumnos.ldif
+ldapadd -c -x -w $LDAP_PASSWORD -D cn=admin,dc=primariadigital,dc=local -f $TMP_DIR/user_prueba.ldif
 
 echo "BASE  dc=primariadigital, dc=local" > /etc/ldap/ldap.conf
 echo "URI ldap://$LDAP_IP/" >> /etc/ldap/ldap.conf
