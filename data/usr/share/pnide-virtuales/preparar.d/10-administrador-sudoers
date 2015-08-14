@@ -1,0 +1,5 @@
+#!/bin/bash
+
+echo "[HUAYRA PNIDE SERVIDOR] - Agregando administador a sudoers"
+
+echo "administrador	ALL=(ALL:ALL) ALL" >> /etc/sudoers

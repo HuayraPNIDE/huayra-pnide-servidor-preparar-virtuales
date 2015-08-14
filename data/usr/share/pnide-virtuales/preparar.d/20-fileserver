@@ -1,0 +1,5 @@
+#!/bin/bash
+
+echo "[HUAYRA PNIDE SERVIDOR] - Creando fileserver"
+
+mkdir -p /opt/pnide/fs 
