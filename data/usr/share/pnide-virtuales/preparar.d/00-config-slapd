@@ -2,7 +2,8 @@
 
 TMP_DIR=/tmp/hps-ldap-confs
 LDAP_PASSWORD=pnideldap_123456
-LDAP_IP=172.16.1.14
+#LDAP_IP=172.16.1.14
+LDAP_IP=localhost
 
 echo "[HUAYRA PNIDE SERVIDOR] - Configurando slapd"
 
@@ -58,21 +59,23 @@ objectClass: organizationalUnit" > $TMP_DIR/ou.ldif
 
 echo "dn: cn=alumnos,ou=Group,dc=primariadigital,dc=local
 cn: alumnos
-gidnumber: 500
-objectclass: posixGroup
-objectclass: top" > $TMP_DIR/group_alumnos.ldif
+gidNumber: 500
+objectClass: posixGroup
+objectClass: top" > $TMP_DIR/group_alumnos.ldif
 
-echo "dn: cn=Sebastian Alvarez,ou=People,dc=primariadigital,dc=local
+echo "dn: uid=salvarez,ou=People,dc=primariadigital,dc=local
 cn: Sebastian Alvarez
-gidnumber: 500
-givenname: Sebastian
-homedirectory: /fs/salvarez
-objectclass: inetOrgPerson
-objectclass: posixAccount
-objectclass: top
-sn: Alvarez
+gidNumber: 500
+givenName: Sebastian Alvarez
+homeDirectory: /fs/salvarez
+objectClass: inetOrgPerson
+objectClass: extensibleObject
+objectClass: posixAccount
+objectClass: top
+info: 1A
+sn: Sebastian Alvarez
 uid: salvarez
-uidnumber: 1001
+uidNumber: 1001
 userpassword: {MD5}ICy5YqxZB1uWSwcVLSNLcA==" > $TMP_DIR/user_prueba.ldif
 
 ldapadd -c -x -w $LDAP_PASSWORD -D cn=admin,dc=primariadigital,dc=local -f $TMP_DIR/ou.ldif
